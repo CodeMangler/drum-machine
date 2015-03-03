@@ -40,8 +40,8 @@ func (header Header) versionString() string {
 	return string(header.version[:nullIndex])
 }
 
-// ContentLength returns the number of bytes of Track content data in the .splice file.
-func (header Header) ContentLength() uint64 {
+// contentSize returns the number of bytes of Track content data in the .splice file.
+func (header Header) contentSize() uint64 {
 	return uint64(header.contentLength - headerMetadataSize)
 }
 
@@ -57,6 +57,7 @@ type Track struct {
 	steps [16]uint8
 }
 
+// parseTrack parses byte stream from an io.Reader and creates a Track structure.
 func parseTrack(r io.Reader) (Track, error) {
 	track := Track{}
 	binary.Read(r, binary.LittleEndian, &track.id)
@@ -65,20 +66,21 @@ func parseTrack(r io.Reader) (Track, error) {
 	return track, nil
 }
 
+// parseTrackCollection parses byte stream from an io.Reader and creates a slice of Track structures.
 func parseTrackCollection(r io.Reader, bytesToRead uint64) ([]Track, error) {
 	tracks := []Track{}
 	bytesRead := uint64(0)
 	for bytesRead < bytesToRead {
 		track, _ := parseTrack(r)
-		bytesRead += track.Size()
+		bytesRead += track.size()
 		tracks = append(tracks, track)
 	}
 	return tracks, nil
 }
 
-// Size returns the number of bytes taken by the Track in memory.
-func (track Track) Size() uint64 {
-	return uint64(trackIDSize + track.name.Size() + trackStepsSize)
+// size returns the number of bytes taken by the Track in memory.
+func (track Track) size() uint64 {
+	return uint64(trackIDSize + track.name.size() + trackStepsSize)
 }
 
 // String returns a string representation of the Track.
@@ -98,7 +100,8 @@ func (track Track) String() string {
 	return trackString
 }
 
-// PascalString represents a length prefixed string. Named so because of it's similarity to string representation in Pascal.
+// PascalString represents a length prefixed string.
+// Named so because of it's similarity to string representation in Pascal.
 type PascalString struct {
 	length uint8
 	text   []byte
@@ -113,8 +116,8 @@ func parsePascalString(r io.Reader) (PascalString, error) {
 	return pstring, nil
 }
 
-// Size returns the number of bytes taken by the PascalString in memory.
-func (pstring PascalString) Size() uint64 {
+// size returns the number of bytes taken by the PascalString in memory.
+func (pstring PascalString) size() uint64 {
 	return uint64(pstring.length + pascalStringMetadataSize)
 }
 

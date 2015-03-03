@@ -32,7 +32,7 @@ func TestHeaderContentLengthExcludesHeaderSize(t *testing.T) {
 		contentLength: 100,
 		version:       [32]byte{'0', '.', '9', '0', '9', '-', 'a', 'l', 'p', 'h', 'a'},
 		tempo:         78.5}
-	assert.Equal(t, uint64(60), header.ContentLength())
+	assert.Equal(t, uint64(60), header.contentSize())
 }
 
 func TestHeaderStringRepresentation(t *testing.T) {
@@ -82,7 +82,7 @@ func TestTrackSize(t *testing.T) {
 	track := Track{id: 220,
 		name:  PascalString{length: 9, text: []byte{'L', 'o', 'w', ' ', 'C', 'o', 'n', 'g', 'a'}},
 		steps: [16]uint8{0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00}}
-	assert.Equal(t, uint64(30), track.Size())
+	assert.Equal(t, uint64(30), track.size())
 }
 
 func TestTrackStringRepresentation(t *testing.T) {
@@ -105,7 +105,7 @@ func TestPascalStringSize(t *testing.T) {
 	buffer := bytes.NewBuffer([]byte{11, 'T', 'e', 's', 't', ' ', 'S', 't', 'r', 'i', 'n', 'g'})
 	pascalString, _ := parsePascalString(buffer)
 
-	assert.Equal(t, uint64(12), pascalString.Size())
+	assert.Equal(t, uint64(12), pascalString.size())
 }
 
 func TestPascalStringStringRepresentation(t *testing.T) {
