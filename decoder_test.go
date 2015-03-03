@@ -76,7 +76,7 @@ Tempo: 999
 }
 
 func TestPatternStringRepresentation(t *testing.T) {
-	header := Header{VersionString: [32]byte{'1', '0', '.', '2', '4', '-', 'b', 'e', 't', 'a'}, Tempo: 120}
+	header := Header{version: [32]byte{'1', '0', '.', '2', '4', '-', 'b', 'e', 't', 'a'}, tempo: 120}
 	trackOne := Track{ID: 220,
 		Name:  PascalString{Length: 9, Text: []byte{'L', 'o', 'w', ' ', 'C', 'o', 'n', 'g', 'a'}},
 		Steps: [16]uint8{0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00}}

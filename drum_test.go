@@ -14,23 +14,31 @@ func TestHeaderParsing(t *testing.T) {
 		0xCD, 0xCC, 0xC4, 0x42, 0, 0, 0, 0})
 	header, _ := parseHeader(buffer)
 
-	assert.Equal(t, "SPLICE", string(header.Signature[0:]))
-	assert.Equal(t, uint64(239), header.ContentLength)
-	assert.Equal(t, "0.808-alpha", string(header.VersionString[0:11]))
-	assert.Equal(t, 98.4, header.Tempo)
+	assert.Equal(t, "SPLICE", string(header.signature[:]))
+	assert.Equal(t, uint64(239), header.contentLength)
+	assert.Equal(t, "0.808-alpha", string(header.version[:11]))
+	assert.Equal(t, 98.4, header.tempo)
 }
 
-func TestHeader_VersionStringText(t *testing.T) {
-	header := Header{VersionString: [32]byte{'0', '.', '9', '0', '9', '-', 'a', 'l', 'p', 'h', 'a'}}
+func TestHeaderVersionString(t *testing.T) {
+	header := Header{version: [32]byte{'0', '.', '9', '0', '9', '-', 'a', 'l', 'p', 'h', 'a'}}
 
-	assert.Equal(t, "0.909-alpha", header.VersionStringText())
+	assert.Equal(t, "0.909-alpha", header.versionString())
+}
+
+func TestHeaderContentLengthExcludesHeaderSize(t *testing.T) {
+	header := Header{signature: [6]byte{'S', 'P', 'L', 'I', 'C', 'E'},
+		contentLength: 100,
+		version:       [32]byte{'0', '.', '9', '0', '9', '-', 'a', 'l', 'p', 'h', 'a'},
+		tempo:         78.5}
+	assert.Equal(t, uint64(60), header.ContentLength())
 }
 
 func TestHeaderStringRepresentation(t *testing.T) {
-	header := Header{Signature: [6]byte{'S', 'P', 'L', 'I', 'C', 'E'},
-		ContentLength: 100,
-		VersionString: [32]byte{'0', '.', '9', '0', '9', '-', 'a', 'l', 'p', 'h', 'a'},
-		Tempo:         78.5}
+	header := Header{signature: [6]byte{'S', 'P', 'L', 'I', 'C', 'E'},
+		contentLength: 100,
+		version:       [32]byte{'0', '.', '9', '0', '9', '-', 'a', 'l', 'p', 'h', 'a'},
+		tempo:         78.5}
 	expectedStringRepresentation := `Saved with HW Version: 0.909-alpha
 Tempo: 78.5`
 	assert.Equal(t, expectedStringRepresentation, fmt.Sprint(header))

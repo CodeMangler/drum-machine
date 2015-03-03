@@ -9,31 +9,38 @@ import (
 	"io"
 )
 
-// Header represents the .splice file header
+// Header represents the .splice file header.
 type Header struct {
-	Signature     [6]byte
-	ContentLength uint64
-	VersionString [32]byte
-	Tempo         float32
+	signature     [6]byte
+	contentLength uint64
+	version       [32]byte
+	tempo         float32
 }
 
-// VersionStringText returns version of the HW used to create the .splice file
-func (header Header) VersionStringText() string {
-	nullIndex := bytes.IndexByte(header.VersionString[:], 0x00)
-	return string(header.VersionString[:nullIndex])
-}
-
-func (header Header) String() string {
-	return fmt.Sprintf("Saved with HW Version: %s\nTempo: %v", header.VersionStringText(), header.Tempo)
-}
-
+// parseHeader parses byte stream from an io.Reader and creates a Header structure.
 func parseHeader(r io.Reader) (Header, error) {
 	header := Header{}
-	io.ReadFull(r, header.Signature[0:])
-	binary.Read(r, binary.BigEndian, &header.ContentLength)
-	io.ReadFull(r, header.VersionString[0:])
-	binary.Read(r, binary.LittleEndian, &header.Tempo)
+	io.ReadFull(r, header.signature[0:])
+	binary.Read(r, binary.BigEndian, &header.contentLength)
+	io.ReadFull(r, header.version[0:])
+	binary.Read(r, binary.LittleEndian, &header.tempo)
 	return header, nil
+}
+
+// versionString returns version of the HW used to create the .splice file.
+func (header Header) versionString() string {
+	nullIndex := bytes.IndexByte(header.version[:], 0x00)
+	return string(header.version[:nullIndex])
+}
+
+// ContentLength returns the number of bytes of Track content data in the .splice file.
+func (header Header) ContentLength() uint64 {
+	return uint64(header.contentLength - 40)
+}
+
+// String returns a string representation of the .splice file header.
+func (header Header) String() string {
+	return fmt.Sprintf("Saved with HW Version: %s\nTempo: %v", header.versionString(), header.tempo)
 }
 
 // PascalString represents a length prefixed string. Named so because of it's similarity to string representation in Pascal.

@@ -25,7 +25,7 @@ func DecodeFile(path string) (*Pattern, error) {
 	bufferedReader := bufio.NewReader(file)
 
 	p.FileHeader, _ = parseHeader(bufferedReader)
-	p.Tracks, _ = parseTrackCollection(bufferedReader, p.FileHeader.ContentLength-40)
+	p.Tracks, _ = parseTrackCollection(bufferedReader, p.FileHeader.ContentLength())
 	return p, nil
 }
 
