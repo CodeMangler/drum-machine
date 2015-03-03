@@ -35,8 +35,7 @@ func TestHeaderParserErrorHandling(t *testing.T) {
 		errorMessage string
 	}{{"Bad Signature", 1, 52, "error when parsing header: signature mismatch"},
 		{"EOF while parsing a field", 0, 4, "error when parsing header signature: unexpected EOF"},
-		{"EOF before beginning to parse a field", 1, 15, "error when parsing header version: EOF"},
-	}
+		{"EOF before beginning to parse a field", 1, 15, "error when parsing header version: EOF"}}
 
 	for _, test := range testCases {
 		t.Logf("Test case: %s\n", test.name)
@@ -97,8 +96,7 @@ func TestTrackParserErrorHandling(t *testing.T) {
 		errorMessage string
 	}{{"EOF while parsing track id", 0, 3, "error when parsing track id: unexpected EOF"},
 		{"EOF while parsing track steps", 0, 16, "error when parsing track steps: unexpected EOF"},
-		{"EOF before beginning to parse a field", 0, 14, "error when parsing track steps: EOF"},
-	}
+		{"EOF before beginning to parse a field", 0, 14, "error when parsing track steps: EOF"}}
 
 	for _, test := range testCases {
 		t.Logf("Test case: %s\n", test.name)
@@ -134,14 +132,14 @@ func TestTrackCollectionParsing(t *testing.T) {
 
 func TestTrackSize(t *testing.T) {
 	track := Track{id: 220,
-		name:  PascalString{length: 9, text: []byte{'L', 'o', 'w', ' ', 'C', 'o', 'n', 'g', 'a'}},
+		name:  &PascalString{length: 9, text: []byte{'L', 'o', 'w', ' ', 'C', 'o', 'n', 'g', 'a'}},
 		steps: [16]uint8{0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00}}
 	assert.Equal(t, uint64(30), track.size())
 }
 
 func TestTrackStringRepresentation(t *testing.T) {
 	track := Track{id: 220,
-		name:  PascalString{length: 9, text: []byte{'L', 'o', 'w', ' ', 'C', 'o', 'n', 'g', 'a'}},
+		name:  &PascalString{length: 9, text: []byte{'L', 'o', 'w', ' ', 'C', 'o', 'n', 'g', 'a'}},
 		steps: [16]uint8{0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00}}
 	expectedStringRepresentation := "(220) Low Conga\t|---x|----|---x|----|"
 	assert.Equal(t, expectedStringRepresentation, fmt.Sprint(track))
@@ -153,6 +151,29 @@ func TestPascalStringParsing(t *testing.T) {
 
 	assert.Equal(t, 11, int(pascalString.length))
 	assert.Equal(t, "Test String", string(pascalString.text))
+}
+
+func TestPascalStringParserErrorHandling(t *testing.T) {
+	stringBytes := []byte{11, 'T', 'e', 's', 't', ' ', 'S', 't', 'r', 'i', 'n', 'g'}
+
+	testCases := []struct {
+		name         string
+		sliceStart   int
+		sliceEnd     int
+		errorMessage string
+	}{{"EOF while parsing pascal string length", 0, 0, "error when parsing pascal string length: EOF"},
+		{"EOF while parsing pascal string text", 0, 4, "error when parsing pascal string text: unexpected EOF"},
+		{"EOF before beginning to parse a field", 0, 1, "error when parsing pascal string text: EOF"}}
+
+	for _, test := range testCases {
+		t.Logf("Test case: %s\n", test.name)
+		buffer := bytes.NewBuffer(stringBytes[test.sliceStart:test.sliceEnd])
+		pstring, error := parsePascalString(buffer)
+		if pstring != nil {
+			t.Fatalf("Expected pascal string parsing to fail. Got:%s\n", pstring)
+		}
+		assert.Equal(t, test.errorMessage, error.Error())
+	}
 }
 
 func TestPascalStringSize(t *testing.T) {

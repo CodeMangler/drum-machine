@@ -19,13 +19,13 @@ const (
 
 // ParseError represents an unexpected error occuring while parsing a .splice file.
 type ParseError struct {
-	WhenParsing string
-	Source      error
+	whenParsing string
+	cause       error
 }
 
 // Error returns a string representation of the ParseError.
-func (e *ParseError) Error() string {
-	return fmt.Sprintf("error when parsing %s: %s", e.WhenParsing, e.Source.Error())
+func (e ParseError) Error() string {
+	return fmt.Sprintf("error when parsing %s: %s", e.whenParsing, e.cause.Error())
 }
 
 // Header represents the .splice file header.
@@ -79,25 +79,27 @@ func (header Header) String() string {
 // Track represents data contained in a single track of a .splice drum machine file.
 type Track struct {
 	id    uint32
-	name  PascalString
+	name  *PascalString
 	steps [16]uint8
 }
 
 // parseTrack parses byte stream from an io.Reader and creates a Track structure.
 func parseTrack(r io.Reader) (*Track, *ParseError) {
-	var err error
 	track := &Track{}
-	if err = binary.Read(r, binary.LittleEndian, &track.id); err != nil {
+	if err := binary.Read(r, binary.LittleEndian, &track.id); err != nil {
 		return nil, &ParseError{"track id", err}
 	}
-	track.name, err = parsePascalString(r)
+
+	trackName, err := parsePascalString(r)
 	if err != nil {
 		return nil, &ParseError{"track name", err}
 	}
-	_, err = io.ReadFull(r, track.steps[0:])
-	if err != nil {
+	track.name = trackName
+
+	if _, err := io.ReadFull(r, track.steps[0:]); err != nil {
 		return nil, &ParseError{"track steps", err}
 	}
+
 	return track, nil
 }
 
@@ -143,11 +145,15 @@ type PascalString struct {
 }
 
 // parsePascalString parses byte stream from an io.Reader and creates a PascalString.
-func parsePascalString(r io.Reader) (PascalString, error) {
-	pstring := PascalString{}
-	binary.Read(r, binary.LittleEndian, &pstring.length)
+func parsePascalString(r io.Reader) (*PascalString, *ParseError) {
+	pstring := &PascalString{}
+	if err := binary.Read(r, binary.LittleEndian, &pstring.length); err != nil {
+		return nil, &ParseError{"pascal string length", err}
+	}
 	pstring.text = make([]byte, pstring.length)
-	io.ReadFull(r, pstring.text)
+	if _, err := io.ReadFull(r, pstring.text); err != nil {
+		return nil, &ParseError{"pascal string text", err}
+	}
 	return pstring, nil
 }
 
