@@ -5,6 +5,7 @@ package drum
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 )
@@ -16,6 +17,17 @@ const (
 	trackStepsSize           = 16
 )
 
+// ParseError represents an unexpected error occuring while parsing a .splice file.
+type ParseError struct {
+	WhenParsing string
+	Source      error
+}
+
+// Error returns a string representation of the ParseError.
+func (e *ParseError) Error() string {
+	return fmt.Sprintf("error when parsing %s: %s", e.WhenParsing, e.Source.Error())
+}
+
 // Header represents the .splice file header.
 type Header struct {
 	signature     [6]byte
@@ -25,12 +37,26 @@ type Header struct {
 }
 
 // parseHeader parses byte stream from an io.Reader and creates a Header structure.
-func parseHeader(r io.Reader) (Header, error) {
-	header := Header{}
-	io.ReadFull(r, header.signature[0:])
-	binary.Read(r, binary.BigEndian, &header.contentLength)
-	io.ReadFull(r, header.version[0:])
-	binary.Read(r, binary.LittleEndian, &header.tempo)
+func parseHeader(r io.Reader) (*Header, *ParseError) {
+	const contentType = "header"
+	header := &Header{}
+	_, err := io.ReadFull(r, header.signature[:])
+	if err != nil {
+		return nil, &ParseError{"header signature", err}
+	}
+	if err := binary.Read(r, binary.BigEndian, &header.contentLength); err != nil {
+		return nil, &ParseError{"header content length", err}
+	}
+	_, err = io.ReadFull(r, header.version[:])
+	if err != nil {
+		return nil, &ParseError{"header version", err}
+	}
+	if err := binary.Read(r, binary.LittleEndian, &header.tempo); err != nil {
+		return nil, &ParseError{"header tempo", err}
+	}
+	if header.signature != [6]byte{'S', 'P', 'L', 'I', 'C', 'E'} {
+		return nil, &ParseError{"header", errors.New("signature mismatch")}
+	}
 	return header, nil
 }
 

@@ -85,7 +85,7 @@ func TestPatternStringRepresentation(t *testing.T) {
 		name:  PascalString{length: 5, text: []byte{'C', 'r', 'a', 's', 'h'}},
 		steps: [16]uint8{0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00}}
 
-	pattern := Pattern{header: header, tracks: []Track{trackOne, trackTwo}}
+	pattern := Pattern{header: &header, tracks: []Track{trackOne, trackTwo}}
 
 	expectedStringRepresentation :=
 		`Saved with HW Version: 10.24-beta

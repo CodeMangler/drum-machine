@@ -32,7 +32,7 @@ func DecodeFile(path string) (*Pattern, error) {
 // Pattern is the high level representation of the
 // drum pattern contained in a .splice file.
 type Pattern struct {
-	header Header
+	header *Header
 	tracks []Track
 }
 
