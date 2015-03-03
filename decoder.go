@@ -13,7 +13,7 @@ func DecodeFile(path string) (*Pattern, error) {
 	p := &Pattern{}
 	file, error := os.Open(path)
 	if error != nil {
-		panic(error)
+		return nil, error
 	}
 
 	defer func() {
@@ -24,8 +24,18 @@ func DecodeFile(path string) (*Pattern, error) {
 
 	bufferedReader := bufio.NewReader(file)
 
-	p.header, _ = parseHeader(bufferedReader)
-	p.tracks, _ = parseTrackCollection(bufferedReader, p.header.contentSize())
+	header, errHeader := parseHeader(bufferedReader)
+	if errHeader != nil {
+		return nil, errHeader
+	}
+	p.header = header
+
+	tracks, errTracks := parseTrackCollection(bufferedReader, p.header.contentSize())
+	if errTracks != nil {
+		return nil, errTracks
+	}
+	p.tracks = tracks
+
 	return p, nil
 }
 

@@ -75,6 +75,12 @@ Tempo: 999
 	}
 }
 
+func TestDecodeFileReturnsNilWithErrorWhenUnableToOpenFile(t *testing.T) {
+	pattern, err := DecodeFile("non-existent-file")
+	assert.Nil(t, pattern)
+	assert.Equal(t, "open non-existent-file: no such file or directory", err.Error())
+}
+
 func TestPatternStringRepresentation(t *testing.T) {
 	header := Header{version: [32]byte{'1', '0', '.', '2', '4', '-', 'b', 'e', 't', 'a'}, tempo: 120}
 	trackOne := Track{id: 220,

@@ -19,13 +19,13 @@ const (
 
 // ParseError represents an unexpected error occuring while parsing a .splice file.
 type ParseError struct {
-	whenParsing string
-	cause       error
+	parseContext string
+	cause        error
 }
 
 // Error returns a string representation of the ParseError.
 func (e ParseError) Error() string {
-	return fmt.Sprintf("error while parsing %s: %s", e.whenParsing, e.cause.Error())
+	return fmt.Sprintf("error while parsing %s: %s", e.parseContext, e.cause.Error())
 }
 
 // Header represents the .splice file header.
