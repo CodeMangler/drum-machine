@@ -9,7 +9,6 @@ import (
 // DecodeFile decodes the drum machine file found at the provided path
 // and returns a pointer to a parsed pattern which is the entry point to the
 // rest of the data.
-// TODO: implement
 func DecodeFile(path string) (*Pattern, error) {
 	p := &Pattern{}
 	file, error := os.Open(path)
@@ -27,13 +26,11 @@ func DecodeFile(path string) (*Pattern, error) {
 
 	p.FileHeader, _ = parseHeader(bufferedReader)
 	p.Tracks, _ = parseTrackCollection(bufferedReader, p.FileHeader.ContentLength-40)
-	fmt.Println(fmt.Sprint(p.Tracks[0]))
 	return p, nil
 }
 
 // Pattern is the high level representation of the
 // drum pattern contained in a .splice file.
-// TODO: implement
 type Pattern struct {
 	FileHeader Header
 	Tracks     []Track

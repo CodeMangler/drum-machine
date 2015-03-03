@@ -1,4 +1,4 @@
-// Package drum is supposed to implement the decoding of .splice drum machine files.
+// Package drum implements the decoding of .splice drum machine files.
 // See golang-challenge.com/go-challenge1/ for more information
 package drum
 
@@ -9,6 +9,7 @@ import (
 	"io"
 )
 
+// Header represents the .splice file header
 type Header struct {
 	Signature     [6]byte
 	ContentLength uint64
@@ -16,6 +17,7 @@ type Header struct {
 	Tempo         float32
 }
 
+// VersionStringText returns version of the HW used to create the .splice file
 func (header Header) VersionStringText() string {
 	nullIndex := bytes.IndexByte(header.VersionString[:], 0x00)
 	return string(header.VersionString[:nullIndex])
@@ -34,6 +36,7 @@ func parseHeader(r io.Reader) (Header, error) {
 	return header, nil
 }
 
+// PascalString represents a length prefixed string. Named so because of it's similarity to string representation in Pascal.
 type PascalString struct {
 	Length uint8
 	Text   []byte
@@ -51,14 +54,15 @@ func parsePascalString(r io.Reader) (PascalString, error) {
 	return pascalString, nil
 }
 
+// Track represents data contained in a single track of a .splice drum machine file
 type Track struct {
-	Id    uint32
+	ID    uint32
 	Name  PascalString
 	Steps [16]uint8
 }
 
 func (track Track) String() string {
-	trackString := fmt.Sprintf("(%d) %s\t|", track.Id, fmt.Sprint(track.Name))
+	trackString := fmt.Sprintf("(%d) %s\t|", track.ID, fmt.Sprint(track.Name))
 	for index, step := range track.Steps {
 		if step == 0x00 {
 			trackString += "-"
@@ -75,7 +79,7 @@ func (track Track) String() string {
 
 func parseTrack(r io.Reader) (Track, error) {
 	track := Track{}
-	binary.Read(r, binary.LittleEndian, &track.Id)
+	binary.Read(r, binary.LittleEndian, &track.ID)
 	track.Name, _ = parsePascalString(r)
 	io.ReadFull(r, track.Steps[0:])
 	return track, nil
