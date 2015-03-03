@@ -2,9 +2,9 @@ package drum
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"path"
 	"testing"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestDecodeFile(t *testing.T) {
@@ -76,22 +76,22 @@ Tempo: 999
 }
 
 func TestPatternStringRepresentation(t *testing.T) {
-		header := FileHeader{VersionString: [32]byte{'1', '0', '.', '2', '4', '-', 'b', 'e', 't', 'a'}, Tempo: 120}
-		trackOne := Track{Id: 220,
-					Name: PascalString{Length: 9, Text: []byte{'L', 'o', 'w', ' ', 'C', 'o', 'n', 'g', 'a'}},
-					Steps: [16]uint8{0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00}}
+	header := FileHeader{VersionString: [32]byte{'1', '0', '.', '2', '4', '-', 'b', 'e', 't', 'a'}, Tempo: 120}
+	trackOne := Track{Id: 220,
+		Name:  PascalString{Length: 9, Text: []byte{'L', 'o', 'w', ' ', 'C', 'o', 'n', 'g', 'a'}},
+		Steps: [16]uint8{0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00}}
 
-		trackTwo := Track{Id: 42,
-					Name: PascalString{Length: 5, Text: []byte{'C', 'r', 'a', 's', 'h'}},
-					Steps: [16]uint8{0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00}}
+	trackTwo := Track{Id: 42,
+		Name:  PascalString{Length: 5, Text: []byte{'C', 'r', 'a', 's', 'h'}},
+		Steps: [16]uint8{0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00}}
 
-		pattern := Pattern {Header: header, Tracks: []Track{trackOne, trackTwo}}
+	pattern := Pattern{Header: header, Tracks: []Track{trackOne, trackTwo}}
 
-		expectedStringRepresentation :=
-`Saved with HW Version: 10.24-beta
+	expectedStringRepresentation :=
+		`Saved with HW Version: 10.24-beta
 Tempo: 120
 (220) Low Conga	|---x|----|---x|----|
 (42) Crash	|--x-|--x-|--x-|--x-|
 `
-		assert.Equal(t, expectedStringRepresentation, fmt.Sprint(pattern))
+	assert.Equal(t, expectedStringRepresentation, fmt.Sprint(pattern))
 }

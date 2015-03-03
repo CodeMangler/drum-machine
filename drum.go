@@ -3,17 +3,17 @@
 package drum
 
 import (
-		"io"
-		"encoding/binary"
-		"bytes"
-		"fmt"
+	"bytes"
+	"encoding/binary"
+	"fmt"
+	"io"
 )
 
 type FileHeader struct {
-	Signature [6]byte
+	Signature     [6]byte
 	ContentLength uint64
 	VersionString [32]byte
-	Tempo float32
+	Tempo         float32
 }
 
 func (header FileHeader) VersionStringText() string {
@@ -36,7 +36,7 @@ func parseHeader(r io.Reader) (FileHeader, error) {
 
 type PascalString struct {
 	Length uint8
-	Text []byte
+	Text   []byte
 }
 
 func (pascalString PascalString) String() string {
@@ -52,8 +52,8 @@ func parsePascalString(r io.Reader) (PascalString, error) {
 }
 
 type Track struct {
-	Id uint32
-	Name PascalString
+	Id    uint32
+	Name  PascalString
 	Steps [16]uint8
 }
 
@@ -65,7 +65,7 @@ func (track Track) String() string {
 		} else {
 			trackString += "x"
 		}
-		if (index + 1) % 4 == 0 {
+		if (index+1)%4 == 0 {
 			trackString += "|"
 		}
 	}
