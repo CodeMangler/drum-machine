@@ -9,24 +9,24 @@ import (
 	"io"
 )
 
-type FileHeader struct {
+type Header struct {
 	Signature     [6]byte
 	ContentLength uint64
 	VersionString [32]byte
 	Tempo         float32
 }
 
-func (header FileHeader) VersionStringText() string {
+func (header Header) VersionStringText() string {
 	nullIndex := bytes.IndexByte(header.VersionString[:], 0x00)
 	return string(header.VersionString[:nullIndex])
 }
 
-func (header FileHeader) String() string {
+func (header Header) String() string {
 	return fmt.Sprintf("Saved with HW Version: %s\nTempo: %v", header.VersionStringText(), header.Tempo)
 }
 
-func parseHeader(r io.Reader) (FileHeader, error) {
-	header := FileHeader{}
+func parseHeader(r io.Reader) (Header, error) {
+	header := Header{}
 	io.ReadFull(r, header.Signature[0:])
 	binary.Read(r, binary.BigEndian, &header.ContentLength)
 	io.ReadFull(r, header.VersionString[0:])

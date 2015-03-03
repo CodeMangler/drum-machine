@@ -20,14 +20,14 @@ func TestHeaderParsing(t *testing.T) {
 	assert.Equal(t, 98.4, header.Tempo)
 }
 
-func TestFileHeader_VersionStringText(t *testing.T) {
-	header := FileHeader{VersionString: [32]byte{'0', '.', '9', '0', '9', '-', 'a', 'l', 'p', 'h', 'a'}}
+func TestHeader_VersionStringText(t *testing.T) {
+	header := Header{VersionString: [32]byte{'0', '.', '9', '0', '9', '-', 'a', 'l', 'p', 'h', 'a'}}
 
 	assert.Equal(t, "0.909-alpha", header.VersionStringText())
 }
 
 func TestHeaderStringRepresentation(t *testing.T) {
-	header := FileHeader{Signature: [6]byte{'S', 'P', 'L', 'I', 'C', 'E'},
+	header := Header{Signature: [6]byte{'S', 'P', 'L', 'I', 'C', 'E'},
 		ContentLength: 100,
 		VersionString: [32]byte{'0', '.', '9', '0', '9', '-', 'a', 'l', 'p', 'h', 'a'},
 		Tempo:         78.5}

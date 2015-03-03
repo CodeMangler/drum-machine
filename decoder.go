@@ -25,8 +25,8 @@ func DecodeFile(path string) (*Pattern, error) {
 
 	bufferedReader := bufio.NewReader(file)
 
-	p.Header, _ = parseHeader(bufferedReader)
-	p.Tracks, _ = parseTrackCollection(bufferedReader, p.Header.ContentLength-40)
+	p.FileHeader, _ = parseHeader(bufferedReader)
+	p.Tracks, _ = parseTrackCollection(bufferedReader, p.FileHeader.ContentLength-40)
 	fmt.Println(fmt.Sprint(p.Tracks[0]))
 	return p, nil
 }
@@ -35,12 +35,12 @@ func DecodeFile(path string) (*Pattern, error) {
 // drum pattern contained in a .splice file.
 // TODO: implement
 type Pattern struct {
-	Header FileHeader
-	Tracks []Track
+	FileHeader Header
+	Tracks     []Track
 }
 
 func (pattern Pattern) String() string {
-	patternString := fmt.Sprintf("%s\n", pattern.Header)
+	patternString := fmt.Sprintf("%s\n", pattern.FileHeader)
 	for _, track := range pattern.Tracks {
 		patternString += fmt.Sprintf("%s\n", track)
 	}
