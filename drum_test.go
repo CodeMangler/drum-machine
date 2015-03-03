@@ -51,18 +51,10 @@ func TestTrackParsing(t *testing.T) {
 		0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00})
 	track, _ := parseTrack(buffer)
 
-	assert.Equal(t, uint32(99), track.ID)
-	assert.Equal(t, 9, int(track.Name.length))
-	assert.Equal(t, "Low Conga", string(track.Name.text))
-	assert.Equal(t, [16]uint8{0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00}, track.Steps)
-}
-
-func TestTrackStringRepresentation(t *testing.T) {
-	track := Track{ID: 220,
-		Name:  PascalString{length: 9, text: []byte{'L', 'o', 'w', ' ', 'C', 'o', 'n', 'g', 'a'}},
-		Steps: [16]uint8{0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00}}
-	expectedStringRepresentation := "(220) Low Conga\t|---x|----|---x|----|"
-	assert.Equal(t, expectedStringRepresentation, fmt.Sprint(track))
+	assert.Equal(t, uint32(99), track.id)
+	assert.Equal(t, 9, int(track.name.length))
+	assert.Equal(t, "Low Conga", string(track.name.text))
+	assert.Equal(t, [16]uint8{0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00}, track.steps)
 }
 
 func TestTrackCollectionParsing(t *testing.T) {
@@ -76,14 +68,29 @@ func TestTrackCollectionParsing(t *testing.T) {
 	tracks, _ := parseTrackCollection(buffer, uint64(len(content)))
 
 	assert.Equal(t, 2, len(tracks))
-	assert.Equal(t, uint32(255), tracks[0].ID)
-	assert.Equal(t, 9, int(tracks[0].Name.length))
-	assert.Equal(t, "Low Conga", string(tracks[0].Name.text))
-	assert.Equal(t, [16]uint8{0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00}, tracks[0].Steps)
-	assert.Equal(t, uint32(99), tracks[1].ID)
-	assert.Equal(t, 7, int(tracks[1].Name.length))
-	assert.Equal(t, "Maracas", string(tracks[1].Name.text))
-	assert.Equal(t, [16]uint8{0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00}, tracks[1].Steps)
+	assert.Equal(t, uint32(255), tracks[0].id)
+	assert.Equal(t, 9, int(tracks[0].name.length))
+	assert.Equal(t, "Low Conga", string(tracks[0].name.text))
+	assert.Equal(t, [16]uint8{0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00}, tracks[0].steps)
+	assert.Equal(t, uint32(99), tracks[1].id)
+	assert.Equal(t, 7, int(tracks[1].name.length))
+	assert.Equal(t, "Maracas", string(tracks[1].name.text))
+	assert.Equal(t, [16]uint8{0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00}, tracks[1].steps)
+}
+
+func TestTrackSize(t *testing.T) {
+	track := Track{id: 220,
+		name:  PascalString{length: 9, text: []byte{'L', 'o', 'w', ' ', 'C', 'o', 'n', 'g', 'a'}},
+		steps: [16]uint8{0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00}}
+	assert.Equal(t, uint64(30), track.Size())
+}
+
+func TestTrackStringRepresentation(t *testing.T) {
+	track := Track{id: 220,
+		name:  PascalString{length: 9, text: []byte{'L', 'o', 'w', ' ', 'C', 'o', 'n', 'g', 'a'}},
+		steps: [16]uint8{0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00}}
+	expectedStringRepresentation := "(220) Low Conga\t|---x|----|---x|----|"
+	assert.Equal(t, expectedStringRepresentation, fmt.Sprint(track))
 }
 
 func TestPascalStringParsing(t *testing.T) {

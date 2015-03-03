@@ -12,6 +12,8 @@ import (
 const (
 	headerMetadataSize       = 40
 	pascalStringMetadataSize = 1
+	trackIDSize              = 4
+	trackStepsSize           = 16
 )
 
 // Header represents the .splice file header.
@@ -50,14 +52,39 @@ func (header Header) String() string {
 
 // Track represents data contained in a single track of a .splice drum machine file.
 type Track struct {
-	ID    uint32
-	Name  PascalString
-	Steps [16]uint8
+	id    uint32
+	name  PascalString
+	steps [16]uint8
 }
 
+func parseTrack(r io.Reader) (Track, error) {
+	track := Track{}
+	binary.Read(r, binary.LittleEndian, &track.id)
+	track.name, _ = parsePascalString(r)
+	io.ReadFull(r, track.steps[0:])
+	return track, nil
+}
+
+func parseTrackCollection(r io.Reader, bytesToRead uint64) ([]Track, error) {
+	tracks := []Track{}
+	bytesRead := uint64(0)
+	for bytesRead < bytesToRead {
+		track, _ := parseTrack(r)
+		bytesRead += track.Size()
+		tracks = append(tracks, track)
+	}
+	return tracks, nil
+}
+
+// Size returns the number of bytes taken by the Track in memory.
+func (track Track) Size() uint64 {
+	return uint64(trackIDSize + track.name.Size() + trackStepsSize)
+}
+
+// String returns a string representation of the Track.
 func (track Track) String() string {
-	trackString := fmt.Sprintf("(%d) %s\t|", track.ID, fmt.Sprint(track.Name))
-	for index, step := range track.Steps {
+	trackString := fmt.Sprintf("(%d) %s\t|", track.id, fmt.Sprint(track.name))
+	for index, step := range track.steps {
 		if step == 0x00 {
 			trackString += "-"
 		} else {
@@ -69,26 +96,6 @@ func (track Track) String() string {
 	}
 
 	return trackString
-}
-
-func parseTrack(r io.Reader) (Track, error) {
-	track := Track{}
-	binary.Read(r, binary.LittleEndian, &track.ID)
-	track.Name, _ = parsePascalString(r)
-	io.ReadFull(r, track.Steps[0:])
-	return track, nil
-}
-
-func parseTrackCollection(r io.Reader, bytesToRead uint64) ([]Track, error) {
-	tracks := []Track{}
-	bytesRead := uint64(0)
-	for bytesRead < bytesToRead {
-		track, _ := parseTrack(r)
-		thisTrack := uint64(4 + track.Name.Size() + 16)
-		bytesRead += thisTrack
-		tracks = append(tracks, track)
-	}
-	return tracks, nil
 }
 
 // PascalString represents a length prefixed string. Named so because of it's similarity to string representation in Pascal.
