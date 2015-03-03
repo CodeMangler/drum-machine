@@ -9,6 +9,11 @@ import (
 	"io"
 )
 
+const (
+	headerMetadataSize       = 40
+	pascalStringMetadataSize = 1
+)
+
 // Header represents the .splice file header.
 type Header struct {
 	signature     [6]byte
@@ -35,7 +40,7 @@ func (header Header) versionString() string {
 
 // ContentLength returns the number of bytes of Track content data in the .splice file.
 func (header Header) ContentLength() uint64 {
-	return uint64(header.contentLength - 40)
+	return uint64(header.contentLength - headerMetadataSize)
 }
 
 // String returns a string representation of the .splice file header.
@@ -43,25 +48,7 @@ func (header Header) String() string {
 	return fmt.Sprintf("Saved with HW Version: %s\nTempo: %v", header.versionString(), header.tempo)
 }
 
-// PascalString represents a length prefixed string. Named so because of it's similarity to string representation in Pascal.
-type PascalString struct {
-	Length uint8
-	Text   []byte
-}
-
-func (pascalString PascalString) String() string {
-	return fmt.Sprintf(string(pascalString.Text[:pascalString.Length]))
-}
-
-func parsePascalString(r io.Reader) (PascalString, error) {
-	pascalString := PascalString{}
-	binary.Read(r, binary.LittleEndian, &pascalString.Length)
-	pascalString.Text = make([]byte, pascalString.Length)
-	io.ReadFull(r, pascalString.Text)
-	return pascalString, nil
-}
-
-// Track represents data contained in a single track of a .splice drum machine file
+// Track represents data contained in a single track of a .splice drum machine file.
 type Track struct {
 	ID    uint32
 	Name  PascalString
@@ -97,9 +84,34 @@ func parseTrackCollection(r io.Reader, bytesToRead uint64) ([]Track, error) {
 	bytesRead := uint64(0)
 	for bytesRead < bytesToRead {
 		track, _ := parseTrack(r)
-		thisTrack := uint64(4 + 1 + track.Name.Length + 16)
+		thisTrack := uint64(4 + track.Name.Size() + 16)
 		bytesRead += thisTrack
 		tracks = append(tracks, track)
 	}
 	return tracks, nil
+}
+
+// PascalString represents a length prefixed string. Named so because of it's similarity to string representation in Pascal.
+type PascalString struct {
+	length uint8
+	text   []byte
+}
+
+// parsePascalString parses byte stream from an io.Reader and creates a PascalString.
+func parsePascalString(r io.Reader) (PascalString, error) {
+	pstring := PascalString{}
+	binary.Read(r, binary.LittleEndian, &pstring.length)
+	pstring.text = make([]byte, pstring.length)
+	io.ReadFull(r, pstring.text)
+	return pstring, nil
+}
+
+// Size returns the number of bytes taken by the PascalString in memory.
+func (pstring PascalString) Size() uint64 {
+	return uint64(pstring.length + pascalStringMetadataSize)
+}
+
+// String returns a string representation of the PascalString.
+func (pstring PascalString) String() string {
+	return fmt.Sprintf(string(pstring.text[:pstring.length]))
 }
