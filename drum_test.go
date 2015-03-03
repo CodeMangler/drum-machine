@@ -21,6 +21,34 @@ func TestHeaderParsing(t *testing.T) {
 	assert.Equal(t, 98.4, header.tempo)
 }
 
+func TestHeaderParserErrorHandling(t *testing.T) {
+	headerBytes := []byte{'S', 'P', 'L', 'I', 'C', 'E',
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xEF,
+		'0', '.', '8', '0', '8', '-', 'a', 'l', 'p', 'h', 'a', 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0xCD, 0xCC, 0xC4, 0x42, 0x00, 0x00, 0x00, 0x00}
+
+	testCases := []struct {
+		name         string
+		sliceStart   int
+		sliceEnd     int
+		errorMessage string
+	}{{"Bad Signature", 1, 52, "error when parsing header: signature mismatch"},
+		{"EOF while parsing a field", 0, 4, "error when parsing header signature: unexpected EOF"},
+		{"EOF before beginning to parse a field", 1, 15, "error when parsing header version: EOF"},
+	}
+
+	for _, test := range testCases {
+		t.Logf("Test case: %s\n", test.name)
+		buffer := bytes.NewBuffer(headerBytes[test.sliceStart:test.sliceEnd])
+		header, error := parseHeader(buffer)
+		if header != nil {
+			t.Fatalf("Expected header parsing to fail. Got:\t%s\n", header)
+		}
+		assert.Equal(t, test.errorMessage, error.Error())
+	}
+}
+
 func TestHeaderVersionString(t *testing.T) {
 	header := Header{version: [32]byte{'0', '.', '9', '0', '9', '-', 'a', 'l', 'p', 'h', 'a'}}
 
@@ -45,34 +73,6 @@ Tempo: 78.5`
 	assert.Equal(t, expectedStringRepresentation, fmt.Sprint(header))
 }
 
-func TestHeaderParserErrorHandling(t *testing.T) {
-	headerBytes := []byte{'S', 'P', 'L', 'I', 'C', 'E',
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xEF,
-		'0', '.', '8', '0', '8', '-', 'a', 'l', 'p', 'h', 'a', 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0xCD, 0xCC, 0xC4, 0x42, 0x00, 0x00, 0x00, 0x00}
-
-	testCases := []struct {
-		name         string
-		sliceStart   int
-		sliceEnd     int
-		errorMessage string
-	}{{"Bad Signature", 1, 52, "error when parsing header: signature mismatch"},
-		{"EOF while reading a field", 0, 4, "error when parsing header signature: unexpected EOF"},
-		{"EOF before beginning to read a field", 1, 15, "error when parsing header version: EOF"},
-	}
-
-	for _, test := range testCases {
-		t.Logf("Test case: %s\n", test.name)
-		buffer := bytes.NewBuffer(headerBytes[test.sliceStart:test.sliceEnd])
-		header, error := parseHeader(buffer)
-		if header != nil {
-			t.Fatalf("Expected header parsing to fail. Got:%s\n", header)
-		}
-		assert.Equal(t, test.errorMessage, error.Error())
-	}
-}
-
 func TestTrackParsing(t *testing.T) {
 	buffer := bytes.NewBuffer([]byte{0x63, 0x00, 0x00, 0x00,
 		0x09, 'L', 'o', 'w', ' ', 'C', 'o', 'n', 'g', 'a',
@@ -83,6 +83,32 @@ func TestTrackParsing(t *testing.T) {
 	assert.Equal(t, 9, int(track.name.length))
 	assert.Equal(t, "Low Conga", string(track.name.text))
 	assert.Equal(t, [16]uint8{0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00}, track.steps)
+}
+
+func TestTrackParserErrorHandling(t *testing.T) {
+	trackBytes := []byte{0x63, 0x00, 0x00, 0x00,
+		0x09, 'L', 'o', 'w', ' ', 'C', 'o', 'n', 'g', 'a',
+		0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00}
+
+	testCases := []struct {
+		name         string
+		sliceStart   int
+		sliceEnd     int
+		errorMessage string
+	}{{"EOF while parsing track id", 0, 3, "error when parsing track id: unexpected EOF"},
+		{"EOF while parsing track steps", 0, 16, "error when parsing track steps: unexpected EOF"},
+		{"EOF before beginning to parse a field", 0, 14, "error when parsing track steps: EOF"},
+	}
+
+	for _, test := range testCases {
+		t.Logf("Test case: %s\n", test.name)
+		buffer := bytes.NewBuffer(trackBytes[test.sliceStart:test.sliceEnd])
+		track, error := parseTrack(buffer)
+		if track != nil {
+			t.Fatalf("Expected track parsing to fail. Got:\t%s\n", track)
+		}
+		assert.Equal(t, test.errorMessage, error.Error())
+	}
 }
 
 func TestTrackCollectionParsing(t *testing.T) {

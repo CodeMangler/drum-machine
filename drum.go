@@ -84,11 +84,20 @@ type Track struct {
 }
 
 // parseTrack parses byte stream from an io.Reader and creates a Track structure.
-func parseTrack(r io.Reader) (Track, error) {
-	track := Track{}
-	binary.Read(r, binary.LittleEndian, &track.id)
-	track.name, _ = parsePascalString(r)
-	io.ReadFull(r, track.steps[0:])
+func parseTrack(r io.Reader) (*Track, *ParseError) {
+	var err error
+	track := &Track{}
+	if err = binary.Read(r, binary.LittleEndian, &track.id); err != nil {
+		return nil, &ParseError{"track id", err}
+	}
+	track.name, err = parsePascalString(r)
+	if err != nil {
+		return nil, &ParseError{"track name", err}
+	}
+	_, err = io.ReadFull(r, track.steps[0:])
+	if err != nil {
+		return nil, &ParseError{"track steps", err}
+	}
 	return track, nil
 }
 
@@ -99,7 +108,7 @@ func parseTrackCollection(r io.Reader, bytesToRead uint64) ([]Track, error) {
 	for bytesRead < bytesToRead {
 		track, _ := parseTrack(r)
 		bytesRead += track.size()
-		tracks = append(tracks, track)
+		tracks = append(tracks, *track)
 	}
 	return tracks, nil
 }
