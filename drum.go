@@ -25,7 +25,7 @@ type ParseError struct {
 
 // Error returns a string representation of the ParseError.
 func (e ParseError) Error() string {
-	return fmt.Sprintf("error when parsing %s: %s", e.whenParsing, e.cause.Error())
+	return fmt.Sprintf("error while parsing %s: %s", e.whenParsing, e.cause.Error())
 }
 
 // Header represents the .splice file header.
@@ -40,23 +40,27 @@ type Header struct {
 func parseHeader(r io.Reader) (*Header, *ParseError) {
 	const contentType = "header"
 	header := &Header{}
-	_, err := io.ReadFull(r, header.signature[:])
-	if err != nil {
+
+	if _, err := io.ReadFull(r, header.signature[:]); err != nil {
 		return nil, &ParseError{"header signature", err}
 	}
+
 	if err := binary.Read(r, binary.BigEndian, &header.contentLength); err != nil {
 		return nil, &ParseError{"header content length", err}
 	}
-	_, err = io.ReadFull(r, header.version[:])
-	if err != nil {
+
+	if _, err := io.ReadFull(r, header.version[:]); err != nil {
 		return nil, &ParseError{"header version", err}
 	}
+
 	if err := binary.Read(r, binary.LittleEndian, &header.tempo); err != nil {
 		return nil, &ParseError{"header tempo", err}
 	}
+
 	if header.signature != [6]byte{'S', 'P', 'L', 'I', 'C', 'E'} {
 		return nil, &ParseError{"header", errors.New("signature mismatch")}
 	}
+
 	return header, nil
 }
 
@@ -104,11 +108,14 @@ func parseTrack(r io.Reader) (*Track, *ParseError) {
 }
 
 // parseTrackCollection parses byte stream from an io.Reader and creates a slice of Track structures.
-func parseTrackCollection(r io.Reader, bytesToRead uint64) ([]Track, error) {
+func parseTrackCollection(r io.Reader, bytesToRead uint64) ([]Track, *ParseError) {
 	tracks := []Track{}
 	bytesRead := uint64(0)
 	for bytesRead < bytesToRead {
-		track, _ := parseTrack(r)
+		track, err := parseTrack(r)
+		if err != nil {
+			return tracks, &ParseError{"track collection", err}
+		}
 		bytesRead += track.size()
 		tracks = append(tracks, *track)
 	}

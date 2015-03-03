@@ -33,9 +33,9 @@ func TestHeaderParserErrorHandling(t *testing.T) {
 		sliceStart   int
 		sliceEnd     int
 		errorMessage string
-	}{{"Bad Signature", 1, 52, "error when parsing header: signature mismatch"},
-		{"EOF while parsing a field", 0, 4, "error when parsing header signature: unexpected EOF"},
-		{"EOF before beginning to parse a field", 1, 15, "error when parsing header version: EOF"}}
+	}{{"Bad Signature", 1, 52, "error while parsing header: signature mismatch"},
+		{"EOF while parsing a field", 0, 4, "error while parsing header signature: unexpected EOF"},
+		{"EOF before beginning to parse a field", 1, 15, "error while parsing header version: EOF"}}
 
 	for _, test := range testCases {
 		t.Logf("Test case: %s\n", test.name)
@@ -94,9 +94,9 @@ func TestTrackParserErrorHandling(t *testing.T) {
 		sliceStart   int
 		sliceEnd     int
 		errorMessage string
-	}{{"EOF while parsing track id", 0, 3, "error when parsing track id: unexpected EOF"},
-		{"EOF while parsing track steps", 0, 16, "error when parsing track steps: unexpected EOF"},
-		{"EOF before beginning to parse a field", 0, 14, "error when parsing track steps: EOF"}}
+	}{{"EOF while parsing track id", 0, 3, "error while parsing track id: unexpected EOF"},
+		{"EOF while parsing track steps", 0, 16, "error while parsing track steps: unexpected EOF"},
+		{"EOF before beginning to parse a field", 0, 14, "error while parsing track steps: EOF"}}
 
 	for _, test := range testCases {
 		t.Logf("Test case: %s\n", test.name)
@@ -130,6 +130,23 @@ func TestTrackCollectionParsing(t *testing.T) {
 	assert.Equal(t, [16]uint8{0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00}, tracks[1].steps)
 }
 
+func TestTrackCollectionParserErrorHandling(t *testing.T) {
+	content := []byte{0xFF, 0x00, 0x00, 0x00,
+		0x09, 'L', 'o', 'w', ' ', 'C', 'o', 'n', 'g', 'a',
+		0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+		0x63, 0x00, 0x00, 0x00,
+		0x07, 'M', 'a', 'r', 'a', 'c', 'a', 's',
+		0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01}
+
+	buffer := bytes.NewBuffer(content)
+	tracks, err := parseTrackCollection(buffer, uint64(len(content)))
+
+	if len(tracks) != 1 {
+		t.Errorf("Exactly one track should have been parsed correctly. Got: %d", len(tracks))
+	}
+	assert.Equal(t, "error while parsing track collection: error while parsing track steps: unexpected EOF", err.Error())
+}
+
 func TestTrackSize(t *testing.T) {
 	track := Track{id: 220,
 		name:  &PascalString{length: 9, text: []byte{'L', 'o', 'w', ' ', 'C', 'o', 'n', 'g', 'a'}},
@@ -161,9 +178,9 @@ func TestPascalStringParserErrorHandling(t *testing.T) {
 		sliceStart   int
 		sliceEnd     int
 		errorMessage string
-	}{{"EOF while parsing pascal string length", 0, 0, "error when parsing pascal string length: EOF"},
-		{"EOF while parsing pascal string text", 0, 4, "error when parsing pascal string text: unexpected EOF"},
-		{"EOF before beginning to parse a field", 0, 1, "error when parsing pascal string text: EOF"}}
+	}{{"EOF while parsing pascal string length", 0, 0, "error while parsing pascal string length: EOF"},
+		{"EOF while parsing pascal string text", 0, 4, "error while parsing pascal string text: unexpected EOF"},
+		{"EOF before beginning to parse a field", 0, 1, "error while parsing pascal string text: EOF"}}
 
 	for _, test := range testCases {
 		t.Logf("Test case: %s\n", test.name)
