@@ -11,14 +11,14 @@ import (
 // rest of the data.
 func DecodeFile(path string) (*Pattern, error) {
 	p := &Pattern{}
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
+	file, error := os.Open(path)
+	if error != nil {
+		return nil, error
 	}
 
 	defer func() {
-		if err := file.Close(); err != nil {
-			panic(err)
+		if error := file.Close(); error != nil {
+			panic(error)
 		}
 	}()
 

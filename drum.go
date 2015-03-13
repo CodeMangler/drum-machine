@@ -84,7 +84,7 @@ func (header Header) String() string {
 type Track struct {
 	id    uint32
 	name  *PascalString
-	steps [trackStepsSize]uint8
+	steps [16]uint8
 }
 
 // parseTrack parses byte stream from an io.Reader and creates a Track structure.
@@ -100,7 +100,7 @@ func parseTrack(r io.Reader) (*Track, *ParseError) {
 	}
 	track.name = trackName
 
-	if _, err := io.ReadFull(r, track.steps[:]); err != nil {
+	if _, err := io.ReadFull(r, track.steps[0:]); err != nil {
 		return nil, &ParseError{"track steps", err}
 	}
 
@@ -145,7 +145,7 @@ func (track Track) String() string {
 }
 
 // PascalString represents a length prefixed string.
-// Named so because of its similarity to string representation in Pascal.
+// Named so because of it's similarity to string representation in Pascal.
 type PascalString struct {
 	length uint8
 	text   []byte
